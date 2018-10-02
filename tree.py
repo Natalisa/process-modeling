@@ -48,7 +48,7 @@ class Tree(object):
     def find(self, root):
         tmp = self.node
         if int(str(root),10) == int(str(tmp.root),10):
-            self.find(root)
+            return self.node
         else:
             for i in tmp.children:
                 i.find(root)
@@ -62,7 +62,11 @@ class Tree(object):
                 for i in tmp.children:
                     i.countChild()
         if root is not None:
-            self.find(root).countCh()
+            vertex = self.find(root)
+            if vertex is not None:
+                return vertex.countCh()
+            else:
+                return 0
 
 def randTree(n):
     """Случайное дерево
