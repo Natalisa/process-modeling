@@ -2,8 +2,9 @@ import random as r
 
 class Node(object):
     """Узел дерева"""
-    def __init__(self,  root):
+    def __init__(self,  root, level):
         self.root = root
+        self.level = level
         self.children = []
 
     def __str__(self):
@@ -11,7 +12,6 @@ class Node(object):
         return tmp
 
     def countCh(self):
-        print("!",len(self.children),self.children)
         return len(self.children)
 
 class Tree(object):
@@ -19,11 +19,9 @@ class Tree(object):
     node - корень
     children - дочернии узлы
     """
-    def __init__(self, node, children=None):
-        self.node = Node(node)
-        if children is not None:
-            for child in children:
-                self.add_child(child)
+    def __init__(self, node, children = None):
+        self.node = Node(node, 0)
+
     def __repr__(self):
         return str(self.node.root)
     def __str__(self):
@@ -40,7 +38,7 @@ class Tree(object):
 
     def printTree(self, root, lv = 0):
         tmp = self.node
-        print("---"*lv, tmp.root)
+        print("---"*lv, tmp.root, "lv", tmp.level)
         if tmp.children is not []:
             for i in tmp.children:
                 i.printTree(i, lv+1)
@@ -48,7 +46,7 @@ class Tree(object):
     def find(self, root):
         tmp = self.node
         if int(str(root),10) == int(str(tmp.root),10):
-            return self.node
+            return tmp
         else:
             for i in tmp.children:
                 i.find(root)
@@ -61,17 +59,23 @@ class Tree(object):
             if tmp.children is not []:
                 for i in tmp.children:
                     i.countChild()
-        if root is not None:
-            vertex = self.find(root)
-            if vertex is not None:
-                return vertex.countCh()
-            else:
-                return 0
 
-def randTree(n):
+        if root is not None:
+            if str(tmp.root) == str(root):
+                return tmp.countCh()
+            else:
+                if tmp.children is not []:
+                    res = 0
+                    for i in tmp.children:
+                        res += i.countChild(root)
+                    return res
+
+def randTree(n, countNode = None, countLevel = None):
     """Случайное дерево
     Аргументы:
     n - количество элементов дерева
+    countNode - ограничение на количество дочерних
+    countLevel - ограничение на количество уровней
     Возвращает:
     head - голова дерева
     tr - случайное дерево
@@ -84,17 +88,21 @@ def randTree(n):
     right.append(left.pop(left.index(head)))
 
     print('left =',left, ' right =',right,'\n')
-
     while left:
         tmp = r.choice(left)
         ind = r.choice(right)
-        right.append(left.pop(left.index(tmp)))
+        if countNode is None or tr.countChild(ind) < countNode:
+            right.append(left.pop(left.index(tmp)))
+        else:
+            right.pop(right.index(ind))
+            continue
         tr.addChild(ind,Tree(tmp))
         print('left =',left, ' right =',right,'ind =',ind,'\n')
         #tr.printTree (head)
     return head,tr
 
-head, tr = randTree(8)
+head, tr = randTree(10, countLevel = 6)
 tr.printTree (head)
 print()
-print(tr.countChild(3))
+#print('количество:', tr.find(3).level)
+
