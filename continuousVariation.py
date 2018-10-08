@@ -1,5 +1,6 @@
 import math
 import random as r
+import matplotlib.pyplot as plt
 
 def fDistributionDensity(x):
     """
