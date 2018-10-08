@@ -1,7 +1,10 @@
 import random as r
 
 class Node(object):
-    """Узел дерева"""
+    """Узел дерева
+    root - номер узла
+    level - уровень в дереве
+    children - спиоск дочерних узлов"""
     def __init__(self,  root, level):
         self.root = root
         self.level = level
@@ -19,8 +22,11 @@ class Tree(object):
     node - корень
     children - дочернии узлы
     """
-    def __init__(self, node, children = None):
-        self.node = Node(node, 0)
+    def __init__(self, node, root=None):
+        if root is None:
+            self.node = Node(node,0)
+        else:
+            self.node = Node(node,root)
 
     def __repr__(self):
         return str(self.node.root)
@@ -28,13 +34,11 @@ class Tree(object):
         return str(self.node.root)
 
     def addChild(self, root, node):
-    #    assert isinstance(node, Tree)
-        tmp = self.node
-        if int(str(root),10) == int(str(tmp.root),10):
-            tmp.children.append(node)
-        else:
-            for i in tmp.children:
-                i.addChild(root,node)
+        tmp = self.find(root)
+        if tmp is not None:
+            print("addChild", tmp, type(tmp), "add", node)
+            new = Tree(node,tmp.level+1)
+            tmp.children.append(new)
 
     def printTree(self, root, lv = 0):
         tmp = self.node
@@ -45,11 +49,13 @@ class Tree(object):
 
     def find(self, root):
         tmp = self.node
+        print("find", root, type(root), "->", tmp)
         if int(str(root),10) == int(str(tmp.root),10):
             return tmp
         else:
+            print("find rek in", tmp.children)
             for i in tmp.children:
-                i.find(root)
+                return i.find(root)
 
     def countChild(self, root=None):
         tmp = self.node
@@ -87,22 +93,30 @@ def randTree(n, countNode = None, countLevel = None):
     tr = Tree(head)
     right.append(left.pop(left.index(head)))
 
-    print('left =',left, ' right =',right,'\n')
+    #print('left =',left, ' right =',right,'\n')
     while left:
+        print("Подготовка")
         tmp = r.choice(left)
         ind = r.choice(right)
-        if countNode is None or tr.countChild(ind) < countNode:
+        if (countNode is None or tr.countChild(ind) < countNode) \
+        and (countLevel is None or tr.find(ind).level <= countLevel):
+            print("lv",tr.find(ind).level)
             right.append(left.pop(left.index(tmp)))
         else:
+            print("right",right)
             right.pop(right.index(ind))
             continue
-        tr.addChild(ind,Tree(tmp))
-        print('left =',left, ' right =',right,'ind =',ind,'\n')
+        print("Добавление")
+        print("add vertex", ind, tmp)
+        tr.addChild(ind, tmp)
+
+        print()
+        tr.printTree(head)
+        print()
+        #print('left =',left, ' right =',right,'ind =',ind,'\n')
         #tr.printTree (head)
     return head,tr
 
-head, tr = randTree(10, countLevel = 6)
+head, tr = randTree(10, countLevel = 3)
 tr.printTree (head)
 print()
-#print('количество:', tr.find(3).level)
-
