@@ -55,7 +55,11 @@ class Tree(object):
         else:
             print("find rek in", tmp.children)
             for i in tmp.children:
-                return i.find(root)
+                r = i.find(root)
+                if r is not None:
+                    return r
+                else:
+                    continue
 
     def countChild(self, root=None):
         tmp = self.node
@@ -99,7 +103,7 @@ def randTree(n, countNode = None, countLevel = None):
         tmp = r.choice(left)
         ind = r.choice(right)
         if (countNode is None or tr.countChild(ind) < countNode) \
-        and (countLevel is None or tr.find(ind).level <= countLevel):
+        and (countLevel is None or tr.find(ind).level < countLevel):
             print("lv",tr.find(ind).level)
             right.append(left.pop(left.index(tmp)))
         else:
