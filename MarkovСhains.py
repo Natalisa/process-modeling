@@ -1,4 +1,5 @@
 import random as r
+#марковская цепь (сумма вероятностей в строке равна 1)
 chains = {1:[[1, 0.2], [2, 0.8]],
           2:[[3, 0.25], [4, 0.15], [5, 0.6]],
           3:[[3, 0.25], [5, 0.75]],
@@ -7,6 +8,17 @@ chains = {1:[[1, 0.2], [2, 0.8]],
           6:[[1, 0.33], [4, 0.17], [7, 0.5]],
           7:[[8, 1]],
           8:[[5, 0.84], [8, 0.16]]}
+
+#дважды стщхасттическая марковская цепь (сумма вероятностей в столбце и строке равна 1)
+matrix = [[0.25, 0, 0.05, 0.1, 0.3, 0, 0.15, 0.15],
+          [0.15, 0.25, 0, 0.05, 0.1, 0.3, 0, 0.15],
+          [0.15, 0.15, 0.25, 0, 0.05, 0.1, 0.3, 0],
+          [0, 0.15, 0.15, 0.25, 0, 0.05, 0.1, 0.3],
+          [0.3, 0, 0.15, 0.15, 0.25, 0, 0.05, 0.1],
+          [0.1, 0.3, 0, 0.15, 0.15, 0.25, 0, 0.05],
+          [0.05, 0.1, 0.3, 0, 0.15, 0.15, 0.25, 0],
+          [0, 0.05, 0.1, 0.3, 0, 0.15, 0.15, 0.25]
+]
 
 def dictToMatrix(chains):
     """преобразование словаря в матрицу"""
@@ -96,7 +108,7 @@ def addDist(distribution, run, state):
 
 def probabilityLeveling(distribution):
     """
-    превращенеие сумм возникновения событий в вероятности
+    превращенеие накопительной суммы возникновения событий в вероятности
     """
     for state in distribution:
         s = sum([x[1] for x in distribution.get(state)])
@@ -114,16 +126,6 @@ def chainProbabilities(run, chains, numOfMove = 10**4, distribution = {}):
     distribution - распределение вероятностей в процессе работы функции
     numOfMove - необходиоме количество шагов
     """
-    #рекурсия не позволяет в глубь больше 100
-    # if numOfMove != 0:
-    #     state = randProb(run, chains)
-    #     #print("\nis",run,"in",state)
-    #     dist = addDist(distribution, run, state)
-    #     #print(distribution)
-    #     return chainProbabilities(state, chains, numOfMove-1, dist)
-    # else:
-    #     dist = probabilityLeveling(distribution)
-    #     return dist
 
     state = randProb(run, chains)
     while numOfMove >= 0:
@@ -139,6 +141,7 @@ def printDict(distribution):
         print("\nState:",state)
         for i in distribution[state]:
             print ("in",i[0],"p(",'%.3f'%i[1],")")
+    print()
 
 def printMatrix(distribution):
     for i in range(len(distribution)):
@@ -152,7 +155,12 @@ def printMatrix(distribution):
             else:
                 print("\t",'%.3f'%distribution[i][j],end='')
         print()
+    print()
 
-dist=chainProbabilities(1, chains)
-printDict(dist)
+# dist=chainProbabilities(1, chains)
+# printDict(dist)
+# printMatrix(dictToMatrix(dist))
+dict = matrixToDict(matrix)
+printMatrix(matrix)
+dist=chainProbabilities(1, dict)
 printMatrix(dictToMatrix(dist))
