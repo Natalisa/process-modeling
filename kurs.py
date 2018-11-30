@@ -5,8 +5,6 @@ import threading
 from tkinter import *
 
 root = Tk()
-mutex = threading.Lock()
-
 #-----------Исходные данные------------------------------------
 
 NUM_MEMORY_BLOCK = 4096
@@ -19,6 +17,11 @@ numMemoryBlock = NUM_MEMORY_BLOCK
 numCores = NUM_CORES
 coreReserve = CORE_RESERVE
 
+mutex = threading.Lock()
+mutexNum = threading.Lock()
+mutexReserve = threading.Lock()
+
+num = [i for i in range(1000)] #номер задачи
 queue = []
 memoryBlock = [1 for i in range(numMemoryBlock)]
 
@@ -62,11 +65,14 @@ class Tasks(Thread):
     def run(self):
         while True:
             time.sleep(TAU)
+            mutexNum.acquire()
+            Num = num.pop(0)
+            mutexNum.release()
             #ter = 0.05
             ter = random.randint(1, 10)
             v = random.randint(1, 100)
             n = random.randint(4, 256)
-            queue.append((ter, v, n))
+            queue.append((Num, ter, v, n))
             print(queue)
 
 class Task(Thread):
@@ -76,51 +82,22 @@ class Task(Thread):
     global numCores
     global numMemoryBlock
     global coreReserve
+    global num
 
-    def __init__(self, ter, v, n):
+    def __init__(self, Num, ter, v, n):
         self.ter = ter
         self.v = v
         self.n = n
+        self.Num = Num
         Thread.__init__(self)
-
-#должно ли тут вобще быть востановление? изза него задача дольше выполняеться
-    def recover(self):
-        global numCores
-        global numMemoryBlock
-        global coreReserve
-        while True:
-            if coreReserve >= self.failure:
-                mutex.acquire()
-                coreReserve -= self.failure
-                numCores += coreReserve - self.failure
-                mutex.release()
-                break
-            else:
-                 if coreReserve <= 0:
-                    time.sleep(TAU)
-
-    def failure(self):
-        global numCores
-        global numMemoryBlock
-        global coreReserve
-        self.failure = random.randint(0, 10)#сколько выходит из строя?
-        mutex.acquire()
-        numCores -= self.failure
-        if numCores < 0:
-            numCores = 0
-        mutex.release()
-        #print("failure cores",self.failure)
-        s = "failure cores "+ str(self.failure) + "\n"
-        tFailureAndRecovery.insert(1.0,s)
-        self.recover()
 
     def run(self):
         global numCores
         global numMemoryBlock
         global coreReserve
 
-        s = " Start task "+ str(self.ter) + " " + str(self.v) \
-            +" " +str(self.n) +"\n"
+        s = " Start task №"+ str(self.Num) +"\t t=" + str(self.ter) + "\t MB=" \
+        + str(self.v) + "\t C=" +str(self.n) +"\t\n"
         eTaskManagerStart.insert(1.0,s)
         #print((self.ter, self.v, self.n),"start")
         while True:
@@ -136,14 +113,69 @@ class Task(Thread):
                 numMemoryBlock += self.v
                 numCores += self.n
                 mutex.release()
-                self.failure()
                 #print((self.ter, self.v, self.n),"completed")
-                s = "Сompleted task "+ str(self.ter) + " " + str(self.v) \
-                    +" " +str(self.n) +"\n"
+                s = "Сompleted task №"+ str(self.Num) +"\t t=" + str(self.ter) + \
+                "\t MB="  + str(self.v) + "\t C=" +str(self.n) +"\t\n"
                 eTaskManagerCompleted.insert(1.0,s)
+
+                mutexNum.acquire()
+                num.append(self.Num)
+                num.sort()
+                mutexNum.release()
                 break
             else:
                 time.sleep(TAU)
+
+class Failure(Thread):
+    """
+    Поток выполнения выхода из строя
+    """
+    global numCores
+    global numMemoryBlock
+    global coreReserve
+
+    def __init__(self):
+        Thread.__init__(self)
+
+    def recover(self):
+        global numCores
+        global numMemoryBlock
+        global coreReserve
+        while True:
+            if coreReserve >= self.failure:
+                mutexReserve.acquire()
+                coreReserve -= self.failure
+                mutexReserve.release()
+
+                mutex.acquire()
+                numCores += coreReserve - self.failure
+                mutex.release()
+                break
+            else:
+                 if coreReserve <= 0:
+                    time.sleep(TAU)
+
+    def funFailure(self):
+        global numCores
+        global numMemoryBlock
+        global coreReserve
+        self.failure = random.randint(0, 10)#сколько выходит из строя?
+
+        mutex.acquire()
+        numCores -= self.failure
+        if numCores < 0:
+            numCores = 0
+        mutex.release()
+
+        #print("failure cores",self.failure)
+        s = "failure cores "+ str(self.failure) + "\n"
+        tFailureAndRecovery.insert(1.0,s)
+        self.recover()
+
+    def run(self):
+        while True:
+            time.sleep(TAU)
+            self.funFailure()
 
 class Work(Thread):
     """
@@ -172,8 +204,8 @@ class Work(Thread):
             if queue != []:
                 self.monitoring()
                 queue.sort()
-                (ter, v, n) = queue.pop(0)
-                task = Task(ter, v, n)
+                (Num, ter, v, n) = queue.pop(0)
+                task = Task(Num, ter, v, n)
                 task.start()
 
 class Recover(Thread):
@@ -189,15 +221,17 @@ class Recover(Thread):
             time.sleep(TAU)
             if coreReserve < CORE_RESERVE:
                 resv = random.randint(0, 10)
-                mutex.acquire()
+
+                mutexReserve.acquire()
                 coreReserve += resv #сколько надо востанавливать?
                 if coreReserve > CORE_RESERVE:
                     raz = resv - (coreReserve - CORE_RESERVE)
                     coreReserve = CORE_RESERVE
-                mutex.release()
+                    s = "resover core "+ str(raz) + "\n"
+                    tFailureAndRecovery.insert(1.0,s)
+                mutexReserve.release()
+
                 #print("resover core ", coreReserve)
-                s = "resover core "+ str(raz) + "\n"
-                tFailureAndRecovery.insert(1.0,s)
 
 if __name__ == "__main__":
     cores = []
@@ -212,6 +246,9 @@ if __name__ == "__main__":
 
     work = Work()
     work.start()
+
+    failure = Failure()
+    failure.start()
 
     recover = Recover()
     recover.start()
