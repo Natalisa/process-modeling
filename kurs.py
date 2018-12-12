@@ -29,15 +29,15 @@ memoryBlock = [1 for i in range(numMemoryBlock)]
 
 MainPanel = LabelFrame (root, text="Характеристики системы")
 lbNumCores = Label(MainPanel,text="Количество ядер")
-eNumCores = Entry(MainPanel,width=50)
+eNumCores = Entry(MainPanel,width=33)
 lbNumCores.pack(side=LEFT)
 eNumCores.pack(side=LEFT)
 lbCoreReserve = Label(MainPanel,text="Количество ядер(резерв)")
-eCoreReserve = Entry(MainPanel,width=50)
+eCoreReserve = Entry(MainPanel,width=33)
 lbCoreReserve.pack(side=LEFT)
 eCoreReserve.pack(side=LEFT)
 lbNumMemoryBlock = Label(MainPanel,text="Количество блоков памяти")
-eNumMemoryBlock = Entry(MainPanel,width=50)
+eNumMemoryBlock = Entry(MainPanel,width=33)
 lbNumMemoryBlock.pack(side=LEFT)
 eNumMemoryBlock.pack(side=LEFT)
 MainPanel.pack()
@@ -55,6 +55,22 @@ eTaskManagerCompleted.pack()
 taskManager.pack()
 
 #-------------------------------------------------------------------------
+def monitoring():
+    """
+    Вывод текущих характеристик системы в интерфейс
+    """
+    global numMemoryBlock
+    global numCores
+    global coreReserve
+    eNumCores.delete(0,END)
+    eNumCores.insert(0, numCores)
+    eNumMemoryBlock.delete(0,END)
+    eNumMemoryBlock.insert(0, numMemoryBlock)
+    eCoreReserve.delete(0,END)
+    eCoreReserve.insert(0, coreReserve)
+    #print("numMemoryBlock ",numMemoryBlock, "numCores ", numCores)
+#-------------------------------------------------------------------------
+
 class Tasks(Thread):
     """
     Генерирует задачи раз в TAU секунд
@@ -64,6 +80,7 @@ class Tasks(Thread):
 
     def run(self):
         while True:
+            #monitoring()
             time.sleep(TAU)
             mutexNum.acquire()
             Num = num.pop(0)
@@ -159,7 +176,9 @@ class Failure(Thread):
         global numCores
         global numMemoryBlock
         global coreReserve
-        self.failure = random.randint(0, 10)#сколько выходит из строя?
+        print(numCores)
+        self.failure = int(numCores * 0.003)
+        #self.failure = random.randint(0, 10)#сколько выходит из строя?
 
         mutex.acquire()
         numCores -= self.failure
@@ -167,7 +186,7 @@ class Failure(Thread):
             numCores = 0
         mutex.release()
 
-        #print("failure cores",self.failure)
+        print("failure cores",self.failure)
         s = "failure cores "+ str(self.failure) + "\n"
         tFailureAndRecovery.insert(1.0,s)
         self.recover()
@@ -183,26 +202,11 @@ class Work(Thread):
     """
     def __init__(self):
         Thread.__init__(self)
-
-    def monitoring(self):
-        """
-        Вывод текущих характеристик системы в интерфейс
-        """
-        global numMemoryBlock
-        global numCores
-        global coreReserve
-        eNumCores.delete(0,END)
-        eNumCores.insert(0, numCores)
-        eNumMemoryBlock.delete(0,END)
-        eNumMemoryBlock.insert(0, numMemoryBlock)
-        eCoreReserve.delete(0,END)
-        eCoreReserve.insert(0, coreReserve)
-        #print("numMemoryBlock ",numMemoryBlock, "numCores ", numCores)
-
+    
     def run(self):
         while True:
             if queue != []:
-                self.monitoring()
+                monitoring()
                 queue.sort()
                 (Num, ter, v, n) = queue.pop(0)
                 task = Task(Num, ter, v, n)
