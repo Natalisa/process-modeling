@@ -19,6 +19,7 @@ cores_reserve = []
 calendar = []
 calendar_otkaz = []
 calendar_otkaz_voss = []
+fails = []
 
 num_task = 0
 
@@ -96,8 +97,8 @@ def failure_cores():
     fail = random.random()
     if fail <= FAILURE_PERSENT:
         fail_count = -1
-        if NUM_CORES * fail >= 1:
-            fail_count = random.randint(1, int(NUM_CORES * fail))
+        # if NUM_CORES * fail >= 1:
+        fail_count = random.randint(1, int(NUM_CORES))
         # print(fail_count)
         fail_position = random.randint(0, NUM_CORES)
         return True, fail_count, fail_position
@@ -156,6 +157,7 @@ def sr_time(lst):
     else:
         return 0
 
+
 if __name__ == "__main__":
     # начальные 1000 задач
     # for i in range(1000):
@@ -186,7 +188,7 @@ if __name__ == "__main__":
         # print(calendar_otkaz_voss)
         if random.random() < 0.1:
             restore_cores(random.randint(0, NUM_CORES))
-        print(sr_time(calendar_otkaz_voss))
+        # print(sr_time(calendar_otkaz_voss))
 
         # отработка задачи
         flag_cores, position_cores, _ = get_cores(n)
@@ -231,9 +233,17 @@ if __name__ == "__main__":
             if result == -1:
                 break
             else:
-                calendar.append((time_machine, 'выход из строя', fail_core_position, fail_core_count))
+                time_to_finish = time_machine + random.randint(0, 10)
+                if calendar[-1][1] == 'счет':
+                    time_task_finish = calendar[-1][2]
+                    core_task = calendar[-1][3]
+                    core_task_position = calendar[-1][4]
+                    peresech = min(core_task_position + core_task, fail_core_position + fail_core_count) - max(core_task_position, fail_core_position)
+                    if peresech >= 0:
+                        fails.append(calendar[-1])
+                calendar.append((time_machine, 'выход из строя', fail_core_position, fail_core_count, time_to_finish))
                 calendar.append(
-                    (time_machine + random.randint(0, 10), 'восстановление', fail_core_position, fail_core_count))
+                    (time_to_finish, 'восстановление', fail_core_position, fail_core_count))
         # if fail_memory_flag:
         #     if drop_memory(fail_memory_position, fail_memory_count) == -1:
         #         break
@@ -246,6 +256,7 @@ if __name__ == "__main__":
         # pprint.pprint(calendar_otkaz)
         # pprint.pprint(calendar_otkaz_voss)
         # time.sleep(1)
+        print(fails)
 
     pprint.pprint(calendar)
     print(len(calendar))
