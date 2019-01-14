@@ -188,7 +188,7 @@ if __name__ == "__main__":
         # print(calendar_otkaz_voss)
         if random.random() < 0.1:
             restore_cores(random.randint(0, NUM_CORES))
-        # print(sr_time(calendar_otkaz_voss))
+        print(sr_time(calendar_otkaz_voss))
 
         # отработка задачи
         flag_cores, position_cores, _ = get_cores(n)
@@ -251,12 +251,12 @@ if __name__ == "__main__":
         # queue.append(get_task())
         pos += 1
         calendar.sort()
-        # pprint.pprint(calendar)
+        pprint.pprint(calendar)
         # pprint.pprint(otkaz)
         # pprint.pprint(calendar_otkaz)
         # pprint.pprint(calendar_otkaz_voss)
         # time.sleep(1)
-        print(fails)
+        # pprint.pprint(fails)
 
     pprint.pprint(calendar)
     print(len(calendar))
